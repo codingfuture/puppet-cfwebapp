@@ -135,7 +135,7 @@ define cfwebapp::redmine (
                 'persistent files log public/plugin_assets',
                 'entrypoint web nginx public socketType=unix',
                 'entrypoint app puma config.ru internal=1',
-                'webcfg webroot public',
+                'webcfg root public',
                 'webcfg main app',
                 "webmount / '{\"static\":true}'",
             ]

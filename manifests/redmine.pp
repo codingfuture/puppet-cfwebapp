@@ -190,9 +190,9 @@ define cfwebapp::redmine (
                 'action prepare app-config database-config app-install',
                 [
                     'action app-config',
-                    "'cp ../../.configuration.yml config/configuration.yml'",
+                    "'ln -sfn ../../.configuration.yml config/configuration.yml'",
                     "'rm -f config/initializers/secret_token.rb'",
-                    "'ln -s ../../.secrets.yml config/secrets.yml'",
+                    "'ln -sfn ../../.secrets.yml config/secrets.yml'",
                     "'rm -rf tmp && ln -s ../.tmp tmp'",
                 ].join(' '),
                 [

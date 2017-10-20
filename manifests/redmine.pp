@@ -5,6 +5,7 @@
 
 define cfwebapp::redmine (
     Hash[String[1],Variant[String,Integer]] $app_dbaccess,
+    CfWeb::SMTP $smtp = {},
 
     String[1] $server_name = $title,
     Array[String[1]] $alt_names = [],
@@ -43,9 +44,24 @@ define cfwebapp::redmine (
     String[1] $deploy_url = 'http://svn.redmine.org/redmine',
     String[1] $deploy_match = '3.4.*',
     String[1] $ruby_ver = '2.3',
+    Optional[String[1]] $rake_secret = undef,
 ) {
-    $secret = cfsystem::gen_pass("rake:${title}", 32)
+    # TODO: shared secret in cluster
+    $secret = cfsystem::gen_pass("rake:${title}", 32, $rake_secret)
 
+    # ---
+    $user = "app_${title}"
+    $smtp_host = pick_default($smtp.dig('host'), 'localhost')
+    $smtp_port = pick_default($smtp.dig('port'), 25)
+    ensure_resource('cfnetwork::describe_service', "smtp_${smtp_port}", {
+        server => "tcp/${smtp_port}",
+    })
+    cfnetwork::client_port { "any:smtp_${smtp_port}:${user}":
+        dst  => $smtp_host,
+        user => $user,
+    }
+
+    # ---
     cfweb::site { $title:
         server_name        => $server_name,
         alt_names          => $alt_names,
@@ -77,6 +93,8 @@ define cfwebapp::redmine (
                 source .env
                 umask 027
                 
+                # DB
+                #----
                 case \${DB_APP_TYPE} in
                     mysql)
                         adapter=mysql2
@@ -87,7 +105,8 @@ define cfwebapp::redmine (
                 esac
 
                 cat >.database.yml.tmp <<EOF
-                production:
+                ---
+                default:
                     adapter: \$adapter
                     database: \${DB_APP_DB}
                     host: \${DB_APP_HOST}
@@ -100,12 +119,70 @@ define cfwebapp::redmine (
                 EOF
                 mv -f .database.yml.tmp .database.yml
                 
+                # Secret
+                #----
                 cat >.secrets.yml.tmp <<EOF
-                production:
+                ---
+                default:
                     secret_key_base: ${secret}
                     secret_token: ${secret}
                 EOF
                 mv -f .secrets.yml.tmp .secrets.yml
+                
+                # Main config
+                #----
+                c_from=${pick_default($smtp.dig('from'), '')}
+                if [ -n "\$c_from" ]; then l_from="from: \$c_from"; fi
+                    
+                c_reply_to=${pick_default($smtp.dig('reply_to'), '')}
+                if [ -n "\$c_reply_to" ]; then l_reply_to="reply_to: \$c_reply_to"; fi
+
+                c_user=${pick_default($smtp.dig('user'), '')}
+                if [ -n "\$c_user" ]; then
+                    l_user="user_name: \$c_user"
+                    l_pass="password: ${pick_default($smtp.dig('password'), '')}"
+                    l_auth="authentication: ${pick_default($smtp.dig('auth_mode'), 'plain')}"
+                fi
+                
+                which_ignore() {
+                    which ${1} || true
+                }
+
+                cat >.configuration.yml.tmp <<EOF
+                ---
+                default:
+                    email_delivery:
+                        delivery_method: :smtp
+                        raise_delivery_errors: false
+                        default_options:
+                            \$l_from
+                            \$l_reply_to
+                        smtp_settings:
+                            address: ${smtp_host}
+                            port: ${smtp_port}
+                            enable_starttls_auto: ${pick_default($smtp.dig('start_tls'), false)}
+                            \$l_auth
+                            \$l_user
+                            \$l_pass
+                    attachments_storage_path:
+                    autologin_cookie_name:
+                    autologin_cookie_path:
+                    autologin_cookie_secure:
+                    
+                    scm_subversion_command: \$(which_ignore svn)
+                    scm_mercurial_command: \$(which_ignore hg)
+                    scm_git_command: \$(which_ignore git)
+                    scm_cvs_command:
+                    scm_bazaar_command:
+                    scm_darcs_command:
+                    
+                    scm_stderr_log_file:
+                    
+                    database_cipher_key:
+                    
+                    rmagick_font_path:
+                EOF
+                mv -f .configuration.yml.tmp .configuration.yml
                 | EOT
                 ,
             deploy_set    => [
@@ -113,7 +190,7 @@ define cfwebapp::redmine (
                 'action prepare app-config database-config app-install',
                 [
                     'action app-config',
-                    "'cp config/configuration.yml.example config/configuration.yml'",
+                    "'cp ../../.configuration.yml config/configuration.yml'",
                     "'rm -f config/initializers/secret_token.rb'",
                     "'ln -s ../../.secrets.yml config/secrets.yml'",
                     "'rm -rf tmp && ln -s ../.tmp tmp'",

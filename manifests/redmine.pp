@@ -106,7 +106,7 @@ define cfwebapp::redmine (
 
                 cat >.database.yml.tmp <<EOF
                 ---
-                default:
+                production:
                     adapter: \$adapter
                     database: \${DB_APP_DB}
                     host: \${DB_APP_HOST}
@@ -123,7 +123,7 @@ define cfwebapp::redmine (
                 #----
                 cat >.secrets.yml.tmp <<EOF
                 ---
-                default:
+                production:
                     secret_key_base: ${secret}
                     secret_token: ${secret}
                 EOF
@@ -150,7 +150,7 @@ define cfwebapp::redmine (
 
                 cat >.configuration.yml.tmp <<EOF
                 ---
-                default:
+                production:
                     email_delivery:
                         delivery_method: :smtp
                         raise_delivery_errors: false
@@ -164,6 +164,8 @@ define cfwebapp::redmine (
                             \$l_auth
                             \$l_user
                             \$l_pass
+                
+                default:
                     attachments_storage_path:
                     autologin_cookie_name:
                     autologin_cookie_path:

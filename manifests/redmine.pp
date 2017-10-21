@@ -47,6 +47,8 @@ define cfwebapp::redmine (
     String[1] $ruby_ver = '2.3',
     Optional[String[1]] $rake_secret = undef,
 ) {
+    include cfweb::nginx
+
     $user = "app_${title}"
     $site_dir = "${cfweb::nginx::web_dir}/${user}"
 

@@ -46,7 +46,13 @@ define cfwebapp::redmine (
     String[1] $ruby_ver = '2.3',
     Optional[String[1]] $rake_secret = undef,
 ) {
+    # ---
     # TODO: shared secret in cluster
+
+    if !$rake_secret and $cfweb::is_secondary {
+        fail('There must be shared rake_secret set in cluster')
+    }
+
     $secret = cfsystem::gen_pass("rake:${title}", 32, $rake_secret)
 
     # ---

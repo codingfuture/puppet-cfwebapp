@@ -6,6 +6,7 @@
 define cfwebapp::redmine (
     Hash[String[1],Variant[String,Integer]] $app_dbaccess,
     CfWeb::SMTP $smtp = {},
+    Optional[CfWeb::IMAP] $imap = undef,
 
     String[1] $server_name = $title,
     Array[String[1]] $alt_names = [],
@@ -46,6 +47,10 @@ define cfwebapp::redmine (
     String[1] $ruby_ver = '2.3',
     Optional[String[1]] $rake_secret = undef,
 ) {
+    $user = "app_${title}"
+    $site_dir = "${cfweb::nginx::web_dir}/${user}"
+
+    # Secret
     # ---
     # TODO: shared secret in cluster
 
@@ -55,20 +60,88 @@ define cfwebapp::redmine (
 
     $secret = cfsystem::gen_pass("rake:${title}", 32, $rake_secret)
 
+    # SMTP
     # ---
-    $user = "app_${title}"
-    $smtp_host = pick_default($smtp.dig('host'), 'localhost')
-    $smtp_port = pick_default($smtp.dig('port'), 25)
+    $smtp_host = pick_default($smtp['host'], 'localhost')
+    $smtp_port = pick_default($smtp['port'], 25)
     ensure_resource('cfnetwork::describe_service', "smtp_${smtp_port}", {
         server => "tcp/${smtp_port}",
     })
     cfnetwork::client_port { "any:smtp_${smtp_port}:${user}":
-        dst  => $smtp_host,
         user => $user,
     }
 
+    # IMAP
+    # ---
+    if $imap and !$cfweb::is_secondary {
+        if $imap['ssl'] {
+            $imap_port = pick($imap['port'], 993)
+            $imap_ssl_arg = '--ssl'
+        } else {
+            $imap_port = pick($imap['port'], 143)
+            $imap_ssl_arg = ''
+        }
+
+        package { 'fetchmail': }
+        -> file { "${site_dir}/.fetchmail.sh":
+            owner   => $user,
+            group   => $user,
+            mode    => '0700',
+            content => @("EOT"/$)
+            #!/bin/bash
+            
+            cat >\${HOME}/.netrc <<EOC
+            machine ${imap['host']}
+            login ${imap['user']}
+            password ${imap['password']}
+            EOC
+            
+            /usr/bin/fetchmail \
+                --timeout 15 \
+                --silent \
+                --all \
+                --nokeep \
+                -p IMAP --idle \
+                --service ${imap_port} \
+                --folder INBOX \
+                ${imap_ssl_arg} \
+                --mda 'cid tool exec bundler -- exec rake redmine:email:read RAILS_ENV="production"' \
+                --limit 5242880 \
+                --user '${imap['user']}' \
+                '${imap['host']}'
+            |EOT
+        }
+        -> Cfweb::App::Futoin[$title]
+
+        $imap_ep_tune = [
+            '"internal":1',
+            '"minMemory":"32M"',
+            '"maxMemory":"32M"',
+            '"maxInstances":1',
+        ].join(',')
+
+        $imap_deploy_set = [
+            "entrypoint fetchmail exe ../.fetchmail.sh '{${imap_ep_tune}}'",
+        ]
+
+        ensure_resource('cfnetwork::describe_service', "imap_${imap_port}", {
+            server => "tcp/${imap_port}",
+        })
+        cfnetwork::client_port { "any:imap_${imap_port}:${user}":
+            user => $user,
+        }
+    } else {
+        $imap_deploy_set = []
+    }
+
+    # RMagick
     # ---
     ensure_resource('package', 'libmagickwand-dev')
+
+    Package['libmagickwand-dev']
+    -> Cfweb::Site[$title]
+
+    # ---
     cfweb::site { $title:
         server_name        => $server_name,
         alt_names          => $alt_names,
@@ -141,17 +214,17 @@ define cfwebapp::redmine (
                 
                 # Main config
                 #----
-                c_from=${pick_default($smtp.dig('from'), '')}
+                c_from=${pick_default($smtp['from'], '')}
                 if [ -n "\$c_from" ]; then l_from="from: \$c_from"; fi
                     
-                c_reply_to=${pick_default($smtp.dig('reply_to'), '')}
+                c_reply_to=${pick_default($smtp['reply_to'], '')}
                 if [ -n "\$c_reply_to" ]; then l_reply_to="reply_to: \$c_reply_to"; fi
 
-                c_user=${pick_default($smtp.dig('user'), '')}
+                c_user=${pick_default($smtp['user'], '')}
                 if [ -n "\$c_user" ]; then
                     l_user="user_name: \$c_user"
-                    l_pass="password: ${pick_default($smtp.dig('password'), '')}"
-                    l_auth="authentication: ${pick_default($smtp.dig('auth_mode'), 'plain')}"
+                    l_pass="password: ${pick_default($smtp['password'], '')}"
+                    l_auth="authentication: ${pick_default($smtp['auth_mode'], 'plain')}"
                 fi
                 
                 which_ignore() {
@@ -170,7 +243,7 @@ define cfwebapp::redmine (
                         smtp_settings:
                             address: ${smtp_host}
                             port: ${smtp_port}
-                            enable_starttls_auto: ${pick_default($smtp.dig('start_tls'), false)}
+                            enable_starttls_auto: ${pick_default($smtp['start_tls'], false)}
                             \$l_auth
                             \$l_user
                             \$l_pass
@@ -199,8 +272,8 @@ define cfwebapp::redmine (
                 cat >\$CONF_DIR/additional_environment.rb.tmp <<EOF
                 require 'syslog/logger'
                 
-                config.logger = Syslog::Logger.new '$user'
-                config.logger.level = Logger::INFO
+                config.logger = Syslog::Logger.new '${user}'
+                config.logger.level = Logger::WARN
                 EOF
                 mv -f \$CONF_DIR/additional_environment.rb.tmp \$CONF_DIR/additional_environment.rb
                 | EOT
@@ -229,6 +302,7 @@ define cfwebapp::redmine (
                     'action migrate',
                     "'@cid tool exec bundler -- exec rake db:migrate RAILS_ENV=production'",
                     "'@cid tool exec bundler -- exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en'",
+                    "'@cid tool exec bundler -- exec rake redmine:plugins:migrate RAILS_ENV=production'",
                 ].join(' '),
                 'persistent files log public/plugin_assets',
                 'entrypoint web nginx public socketType=unix',
@@ -236,7 +310,7 @@ define cfwebapp::redmine (
                 'webcfg root public',
                 'webcfg main app',
                 "webmount / '{\"static\":true}'",
-            ]
+            ] + $imap_deploy_set,
         }
     }
 }

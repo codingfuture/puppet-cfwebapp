@@ -90,7 +90,7 @@ define cfwebapp::redmine (
             group   => $user,
             mode    => '0700',
             content => @("EOT"/$)
-            #!/bin/bash
+            #!/bin/dash
             
             cat >\${HOME}/.netrc <<EOC
             machine ${imap['host']}
@@ -98,7 +98,7 @@ define cfwebapp::redmine (
             password ${imap['password']}
             EOC
             
-            /usr/bin/fetchmail \
+            exec /usr/bin/fetchmail \
                 --timeout 15 \
                 --silent \
                 --all \

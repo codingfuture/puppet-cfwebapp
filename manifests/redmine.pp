@@ -68,6 +68,7 @@ define cfwebapp::redmine (
     }
 
     # ---
+    ensure_resource('package', 'libmagickwand-dev')
     cfweb::site { $title:
         server_name        => $server_name,
         alt_names          => $alt_names,
@@ -109,8 +110,11 @@ define cfwebapp::redmine (
                         adapter=\${DB_APP_TYPE}
                         ;;
                 esac
+                
+                CONF_DIR=.redmine_conf
+                mkdir -p \$CONF_DIR
 
-                cat >.database.yml.tmp <<EOF
+                cat >\$CONF_DIR/database.yml.tmp <<EOF
                 ---
                 production:
                     adapter: \$adapter
@@ -123,17 +127,17 @@ define cfwebapp::redmine (
                     socket: \${DB_APP_SOCKET}
                     connect_timeout: 3
                 EOF
-                mv -f .database.yml.tmp .database.yml
+                mv -f \$CONF_DIR/database.yml.tmp \$CONF_DIR/database.yml
                 
                 # Secret
                 #----
-                cat >.secrets.yml.tmp <<EOF
+                cat >\$CONF_DIR/secrets.yml.tmp <<EOF
                 ---
                 production:
                     secret_key_base: ${secret}
                     secret_token: ${secret}
                 EOF
-                mv -f .secrets.yml.tmp .secrets.yml
+                mv -f \$CONF_DIR/secrets.yml.tmp \$CONF_DIR/secrets.yml
                 
                 # Main config
                 #----
@@ -154,7 +158,7 @@ define cfwebapp::redmine (
                     which ${1} || true
                 }
 
-                cat >.configuration.yml.tmp <<EOF
+                cat >\$CONF_DIR/configuration.yml.tmp <<EOF
                 ---
                 production:
                     email_delivery:
@@ -190,7 +194,15 @@ define cfwebapp::redmine (
                     
                     rmagick_font_path:
                 EOF
-                mv -f .configuration.yml.tmp .configuration.yml
+                mv -f \$CONF_DIR/configuration.yml.tmp \$CONF_DIR/configuration.yml
+                
+                cat >\$CONF_DIR/additional_environment.rb.tmp <<EOF
+                require 'syslog/logger'
+                
+                config.logger = Syslog::Logger.new '$user'
+                config.logger.level = Logger::INFO
+                EOF
+                mv -f \$CONF_DIR/additional_environment.rb.tmp \$CONF_DIR/additional_environment.rb
                 | EOT
                 ,
             deploy_set    => [
@@ -198,19 +210,20 @@ define cfwebapp::redmine (
                 'action prepare app-config database-config app-install',
                 [
                     'action app-config',
-                    "'ln -sfn ../../.configuration.yml config/configuration.yml'",
+                    "'ln -sfn ../../.redmine_conf/configuration.yml config/'",
+                    "'ln -sfn ../../.redmine_conf/additional_environment.rb config/'",
                     "'rm -f config/initializers/secret_token.rb'",
-                    "'ln -sfn ../../.secrets.yml config/secrets.yml'",
+                    "'ln -sfn ../../.redmine_conf/secrets.yml config/'",
                     "'rm -rf tmp && ln -s ../.tmp tmp'",
                 ].join(' '),
                 [
                     'action database-config',
-                    "'ln -s ../../.database.yml config/database.yml'",
+                    "'ln -sfn ../../.redmine_conf/database.yml config/'",
                 ].join(' '),
                 [
                     'action app-install',
                     "'@cid build-dep ruby mysql-client imagemagick tzdata libxml2'",
-                    "'@cid tool exec bundler -- install --without \"development test rmagick\"'",
+                    "'@cid tool exec bundler -- install --without \"development test\"'",
                 ].join(' '),
                 [
                     'action migrate',

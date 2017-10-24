@@ -4,7 +4,7 @@
 
 
 define cfwebapp::redmine (
-    Hash[String[1],Variant[String,Integer]] $app_dbaccess,
+    CfWeb::DBAccess $app_dbaccess,
     CfWeb::SMTP $smtp = {},
     Optional[CfWeb::IMAP] $imap = undef,
 
@@ -20,7 +20,7 @@ define cfwebapp::redmine (
     Boolean $is_backend = false,
 
     Hash[String[1],Hash] $auto_cert = {},
-    Array[String[1]] $shared_certs = [],
+    CfWeb::SharedCert $shared_cert = [],
 
     Optional[String[1]] $custom_conf = undef,
 
@@ -29,16 +29,7 @@ define cfwebapp::redmine (
     Cfsystem::CpuWeight $cpu_weight = 100,
     Cfsystem::IoWeight $io_weight = 100,
 
-    Hash[String[1], Struct[{
-        type       => Enum['conn', 'req'],
-        var        => String[1],
-        count      => Optional[Integer[1]],
-        entry_size => Optional[Integer[1]],
-        rate       => Optional[String[1]],
-        burst      => Optional[Integer[0]],
-        nodelay    => Optional[Boolean],
-        newname    => Optional[String[1]],
-    }]] $limits = {},
+    CfWeb::Limits $limits = {},
 
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'svn',
@@ -155,7 +146,7 @@ define cfwebapp::redmine (
         redirect_plain     => $redirect_plain,
         is_backend         => $is_backend,
         auto_cert          => $auto_cert,
-        shared_certs       => $shared_certs,
+        shared_cert        => $shared_cert,
         dbaccess           => {
             app => $app_dbaccess,
         },

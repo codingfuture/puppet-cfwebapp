@@ -42,11 +42,12 @@ define cfwebapp::redmine (
 
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'svn',
-    String[1] $deploy_url = 'http://svn.redmine.org/redmine',
+    String[1] $deploy_url = 'https://svn.redmine.org/redmine',
     String[1] $deploy_match = '3.4.*',
     String[1] $ruby_ver = '2.3',
     Optional[String[1]] $rake_secret = undef,
 ) {
+    require cfwebapp::redmine::gandi
     include cfweb::nginx
 
     $user = "app_${title}"

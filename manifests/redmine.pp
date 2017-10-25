@@ -109,8 +109,8 @@ define cfwebapp::redmine (
 
         $imap_ep_tune = [
             '"internal":1',
-            '"minMemory":"48M"',
-            '"maxMemory":"48M"',
+            '"minMemory":"128M"',
+            '"maxMemory":"128M"',
             '"maxInstances":1',
         ].join(',')
 

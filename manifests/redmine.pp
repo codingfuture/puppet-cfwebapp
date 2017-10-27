@@ -19,7 +19,7 @@ define cfwebapp::redmine (
 
     Boolean $is_backend = false,
 
-    Hash[String[1],Hash] $auto_cert = {},
+    Hash[String[1],Any] $auto_cert = {},
     CfWeb::SharedCert $shared_cert = [],
 
     Optional[String[1]] $custom_conf = undef,

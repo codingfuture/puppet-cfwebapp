@@ -37,12 +37,67 @@ define cfwebapp::redmine (
     String[1] $deploy_match = '3.4.*',
     String[1] $ruby_ver = '2.3',
     Optional[String[1]] $rake_secret = undef,
+
+
+    Hash[String[1], Hash] $plugins = {
+        'redmine_telegram_common' => {
+            'impl' => 'cfwebapp::redmine::redmine_telegram_common',
+        },
+        'redmine_2fa' => {
+            'impl' => 'cfwebapp::redmine::redmine_2fa',
+        },
+    },
 ) {
     require cfwebapp::redmine::gandi
     include cfweb::nginx
 
     $user = "app_${title}"
     $site_dir = "${cfweb::nginx::web_dir}/${user}"
+
+    # Where to put plugins for installation
+    # ---
+    $plugins_zip_dir  = "${site_dir}/.redmine_plugins"
+
+    file { $plugins_zip_dir:
+        ensure  => directory,
+        purge   => true,
+        force   => true,
+        recurse => true,
+        owner   => $user,
+        group   => $user,
+        mode    => '0700',
+    }
+    file { "${site_dir}/.unpack-plugins.sh":
+        owner   => $user,
+        group   => $user,
+        mode    => '0700',
+        content => @(EOT)
+        #!/bin/bash
+        
+        for p in $(find ../.redmine_plugins/ -type f); do
+            case $p in
+                *.zip)
+                    /usr/bin/unzip -d ./plugins $p
+                    ;;
+                *.tgz|*.tar.gz)
+                    /usr/bin/tar xzf -C ./plugins $p
+                    ;;
+                *.tar|*.tar)
+                    /usr/bin/tar xf -C ./plugins $p
+                    ;;
+                *)
+                    echo "Unsupported $p"
+                    exit 1
+                    ;;
+            esac
+            
+            p=$(basename $p)
+            p=${p%.*}
+            pn=$(echo $p | cut -d- -f1)
+            mv ./plugins/$p ./plugins/$pn
+        done
+        |EOT
+    }
 
     # Secret
     # ---
@@ -225,6 +280,7 @@ define cfwebapp::redmine (
                     which ${1} 2>/dev/null || true
                 }
 
+                #---
                 cat >\$CONF_DIR/configuration.yml.tmp <<EOF
                 ---
                 production:
@@ -263,6 +319,7 @@ define cfwebapp::redmine (
                 EOF
                 mv -f \$CONF_DIR/configuration.yml.tmp \$CONF_DIR/configuration.yml
                 
+                #---
                 cat >\$CONF_DIR/additional_environment.rb.tmp <<EOF
                 require 'syslog/logger'
                 
@@ -270,11 +327,15 @@ define cfwebapp::redmine (
                 config.log_level = :warn
                 EOF
                 mv -f \$CONF_DIR/additional_environment.rb.tmp \$CONF_DIR/additional_environment.rb
+                
+                # Trigger re-deploy on change
+                #---
+                cid deploy set env redminePlugins "$(ls .redmine_plugins)"
                 | EOT
                 ,
             deploy_set    => [
                 "env rubyVer ${ruby_ver}",
-                'action prepare app-config database-config app-install',
+                'action prepare app-config database-config unpack-plugins app-install',
                 [
                     'action app-config',
                     "'ln -sfn ../../.redmine_conf/configuration.yml config/'",
@@ -293,12 +354,16 @@ define cfwebapp::redmine (
                     "'@cid tool exec bundler -- install --without \"development test\"'",
                 ].join(' '),
                 [
+                    'action unpack-plugins',
+                    '../.unpack-plugins.sh',
+                ].join(' '),
+                [
                     'action migrate',
                     "'@cid tool exec bundler -- exec rake db:migrate RAILS_ENV=production'",
                     "'@cid tool exec bundler -- exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en'",
                     "'@cid tool exec bundler -- exec rake redmine:plugins:migrate RAILS_ENV=production'",
                 ].join(' '),
-                'persistent files log public/plugin_assets',
+                'persistent files log',
                 'entrypoint web nginx public socketType=unix',
                 'entrypoint app puma config.ru internal=1 connMemory=16M',
                 'webcfg root public',
@@ -306,5 +371,25 @@ define cfwebapp::redmine (
                 "webmount / '{\"static\":true}'",
             ] + $imap_deploy_set,
         }
+    }
+
+    # ---
+    $plugins.each |$name, $params| {
+        $impl = pick($params['impl'], 'cfwebapp::redmine::generic')
+        $rsc_name = "${title}:${name}"
+
+        create_resources(
+            $impl,
+            {
+                $rsc_name => merge($params - 'impl', {
+                    target_dir => $plugins_zip_dir,
+                    name       => $name,
+                })
+            }
+        )
+
+        File[$plugins_zip_dir]
+        -> Cfwebapp::Redmine::Generic[$rsc_name]
+        -> Cfweb::Deploy[$title]
     }
 }

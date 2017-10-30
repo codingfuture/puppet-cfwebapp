@@ -18,8 +18,11 @@ define cfwebapp::redmine::generic(
         wget::fetch { $title:
             source      => $source_act,
             destination => $dst,
-            cache_dir   => "${target_dir}/../.cache/wget/${plugin_name}/",
-            mode        => '0644',
+        }
+        -> file { $dst:
+            mode    => '0644',
+            replace => no,
+            content => '',
         }
     } else {
         file { $dst:

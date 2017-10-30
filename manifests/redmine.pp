@@ -382,8 +382,8 @@ define cfwebapp::redmine (
             $impl,
             {
                 $rsc_name => merge($params - 'impl', {
-                    target_dir => $plugins_zip_dir,
-                    name       => $name,
+                    target_dir  => $plugins_zip_dir,
+                    plugin_name => $name,
                 })
             }
         )

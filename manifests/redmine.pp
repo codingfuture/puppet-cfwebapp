@@ -324,7 +324,7 @@ define cfwebapp::redmine (
                 require 'syslog/logger'
                 
                 config.logger = Syslog::Logger.new '${user}'
-                config.log_level = :warn
+                config.log_level = :fatal
                 EOF
                 mv -f \$CONF_DIR/additional_environment.rb.tmp \$CONF_DIR/additional_environment.rb
                 
@@ -365,7 +365,7 @@ define cfwebapp::redmine (
                 ].join(' '),
                 'persistent files log',
                 'entrypoint web nginx public socketType=unix',
-                'entrypoint app puma config.ru internal=1 connMemory=16M',
+                'entrypoint app puma config.ru internal=1 connMemory=32M',
                 'webcfg root public',
                 'webcfg main app',
                 "webmount / '{\"static\":true}'",

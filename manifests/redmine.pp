@@ -46,6 +46,9 @@ define cfwebapp::redmine (
         'redmine_2fa' => {
             'impl' => 'cfwebapp::redmine::redmine_2fa',
         },
+        'redmine_issue_checklist' => {
+            'impl' => 'cfwebapp::redmine::redmine_issue_checklist',
+        },
     },
 ) {
     require cfwebapp::redmine::gandi

@@ -80,7 +80,7 @@ define cfwebapp::redmine (
         for p in $(find ../.redmine_plugins/ -type f); do
             case $p in
                 *.zip)
-                    /usr/bin/unzip -d ./plugins $p
+                    /usr/bin/unzip -q -d ./plugins $p
                     ;;
                 *.tgz|*.tar.gz)
                     /usr/bin/tar xzf -C ./plugins $p

@@ -31,6 +31,8 @@ define cfwebapp::redmine (
 
     CfWeb::Limits $limits = {},
 
+    Boolean $robots_noindex = true,
+
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'svn',
     String[1] $deploy_url = 'https://svn.redmine.org/redmine',
@@ -205,6 +207,7 @@ define cfwebapp::redmine (
         is_backend         => $is_backend,
         auto_cert          => $auto_cert,
         shared_cert        => $shared_cert,
+        robots_noindex     => $robots_noindex,
         dbaccess           => {
             app => $app_dbaccess,
         },

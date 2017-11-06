@@ -9,29 +9,15 @@ define cfwebapp::redmine (
     Optional[CfWeb::IMAP] $imap = undef,
 
     String[1] $server_name = $title,
-    Array[String[1]] $alt_names = [],
-    Boolean $redirect_alt_names = true,
-
-    Array[String[1]] $ifaces = ['main'],
-    Array[Cfnetwork::Port] $plain_ports = [80],
-    Array[Cfnetwork::Port] $tls_ports = [443],
-    Boolean $redirect_plain = true,
-
-    Boolean $is_backend = false,
 
     Hash[String[1],Any] $auto_cert = {},
     CfWeb::SharedCert $shared_cert = [],
 
-    Optional[String[1]] $custom_conf = undef,
+    Boolean $is_backend = false,
+    Boolean $robots_noindex = true,
 
     Integer[1] $memory_weight = 100,
     Optional[Integer[1]] $memory_max = undef,
-    Cfsystem::CpuWeight $cpu_weight = 100,
-    Cfsystem::IoWeight $io_weight = 100,
-
-    CfWeb::Limits $limits = {},
-
-    Boolean $robots_noindex = true,
 
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'svn',
@@ -52,6 +38,8 @@ define cfwebapp::redmine (
             'impl' => 'cfwebapp::redmine::redmine_issue_checklist',
         },
     },
+
+    Hash[String[1], Any] $site_params = {},
 ) {
     require cfwebapp::redmine::gandi
     include cfweb::nginx
@@ -196,17 +184,11 @@ define cfwebapp::redmine (
     -> Cfweb::Site[$title]
 
     # ---
-    cfweb::site { $title:
+    ensure_resource('cfweb::site', $title, $site_params + {
         server_name        => $server_name,
-        alt_names          => $alt_names,
-        redirect_alt_names => $redirect_alt_names,
-        ifaces             => $ifaces,
-        plain_ports        => $plain_ports,
-        tls_ports          => $tls_ports,
-        redirect_plain     => $redirect_plain,
-        is_backend         => $is_backend,
         auto_cert          => $auto_cert,
         shared_cert        => $shared_cert,
+        is_backend         => $is_backend,
         robots_noindex     => $robots_noindex,
         dbaccess           => {
             app => $app_dbaccess,
@@ -377,7 +359,7 @@ define cfwebapp::redmine (
                 "webmount / '{\"static\":true}'",
             ] + $imap_deploy_set,
         }
-    }
+    })
 
     # ---
     $plugins.each |$name, $params| {

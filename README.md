@@ -15,15 +15,29 @@ Full Redmine deployment. By default SVN tags are used.
 IMAP IDLE-based polling supported. Good for low incoming email count.
 
 * URL: [www.redmine.org](http://www.redmine.org/)
-* See cfweb::site for main parameters
-* `$app_dbaccess` - DB access definition
-* `$deploy_type = 'vcstag'`
-* `$deploy_tool = 'svn'`
-* `$deploy_url = 'http://svn.redmine.org/redmine'`
-* `$deploy_match = '3.4.*'`
-* `$ruby_ver = '2.3'`
-* '$smtp' - SMTP configuration
-* '$imap' - IMAP configuration
+* General `cfweb::site` shortcuts
+    * `$server_name = $title`
+    * `$auto_cert = {}`
+    * `$shared_cert = []`
+    * `$robots_noindex = true`
+    * `$site_params = {}` - other `cfweb::site` params
+* `futoin` app shortcuts:
+    * `$memory_weight = 100`
+    * `$memory_max = undef`
+* Redmine-specific
+    * `$app_dbaccess` - DB access definition
+    * `$deploy_type = 'vcstag'`
+    * `$deploy_tool = 'svn'`
+    * `$deploy_url = 'http://svn.redmine.org/redmine'`
+    * `$deploy_match = '3.4.*'`
+    * `$ruby_ver = '2.3'`
+    * `$rake_secret = undef` - auto-gen by default
+    * '$smtp' - SMTP configuration
+    * '$imap' - IMAP configuration
+    * `$plugins` - hash of name => params to install. Default:
+        * 'redmine_telegram_common' for 'redmine_2fa'
+        * 'redmine_2fa'
+        * 'redmine_issue_checklist'
 
 Example:
 

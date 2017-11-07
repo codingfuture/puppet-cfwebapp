@@ -353,7 +353,7 @@ define cfwebapp::redmine (
                 ].join(' '),
                 'persistent files log',
                 'entrypoint web nginx public socketType=unix',
-                'entrypoint app puma config.ru internal=1 connMemory=32M',
+                'entrypoint app puma config.ru internal=1 connMemory=32M minMemory=256M',
                 'webcfg root public',
                 'webcfg main app',
                 "webmount / '{\"static\":true}'",

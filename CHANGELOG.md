@@ -1,4 +1,7 @@
 
+=== (next) ===
+NEW: version bump of cf* series
+
 === 0.11.1 (2017-11-07) ===
 CHANGED: increase Redmien minMemory to 256M
 

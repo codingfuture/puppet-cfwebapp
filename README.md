@@ -23,6 +23,7 @@ IMAP IDLE-based polling supported. Good for low incoming email count.
     * `$site_params = {}` - other `cfweb::site` params
 * `futoin` app shortcuts:
     * `$memory_weight = 100`
+    * `$memory_min = 404`
     * `$memory_max = undef`
 * Redmine-specific
     * `$app_dbaccess` - DB access definition

@@ -1,4 +1,7 @@
 
+=== (next) ===
+NEW: redmine $memory_min support
+
 === 0.12.0 (2018-02-09) ===
 NEW: version bump of cf* series
 

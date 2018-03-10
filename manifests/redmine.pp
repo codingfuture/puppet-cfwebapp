@@ -17,7 +17,8 @@ define cfwebapp::redmine (
     Boolean $robots_noindex = true,
 
     Integer[1] $memory_weight = 100,
-    Optional[Integer[1]] $memory_max = undef,
+    Integer[256] $memory_min = 404,
+    Optional[Integer[404]] $memory_max = undef,
 
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'svn',
@@ -196,6 +197,7 @@ define cfwebapp::redmine (
         apps               => {
             futoin => {
                 memory_weight => $memory_weight,
+                memory_min    => $memory_min,
                 memory_max    => $memory_max,
             },
         },

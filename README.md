@@ -4,8 +4,6 @@
 
 Module with web application "recipes" on top of [cfweb](https://github.com/codingfuture/puppet-cfweb) module.
 
-**This module is still in development!**
-
 ## Apps supported
 
 ### Redmine

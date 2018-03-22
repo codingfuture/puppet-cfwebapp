@@ -1,4 +1,7 @@
 
+# (next)
+NEW: Elastic Kibana support
+
 # 0.12.1 (2018-03-10)
 NEW: redmine $memory_min support
 

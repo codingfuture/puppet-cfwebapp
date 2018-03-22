@@ -6,6 +6,31 @@ Module with web application "recipes" on top of [cfweb](https://github.com/codin
 
 ## Apps supported
 
+* Kibana
+* Redmine
+
+### Kibana
+
+A fake RMS package is created from /usr/share/kibana setup coming from the official package. So, it should be
+always up to date.
+
+* URL: [www.elastic.co](https://www.elastic.co/guide/en/kibana/current/introduction.html)
+* General `cfweb::site` shortcuts
+    * `$server_name = $title`
+    * `$auto_cert = {}`
+    * `$shared_cert = []`
+    * `$robots_noindex = true`
+    * `$site_params = {}` - other `cfweb::site` params
+* `futoin` app shortcuts:
+    * `$memory_weight = 100`
+    * `$memory_min = 404`
+    * `$memory_max = undef`
+* Kibana-specific:
+    * `$app_dbaccess` - define cfdb::access to cflogsink cluster
+    * `$plugins = []` - list of plugins to install per instance
+    * `$kibana_tune = {}` - custom overrides for `kibana.yml`
+
+
 ### Redmine
 
 Full Redmine deployment. By default SVN tags are used.

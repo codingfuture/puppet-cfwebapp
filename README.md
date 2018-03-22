@@ -14,9 +14,12 @@ Module with web application "recipes" on top of [cfweb](https://github.com/codin
 A fake RMS package is created from /usr/share/kibana setup coming from the official package. So, it should be
 always up to date.
 
+*Note: Kibana listens to loopback by default in case of accident misconfiguration.*
+
 * URL: [www.elastic.co](https://www.elastic.co/guide/en/kibana/current/introduction.html)
 * General `cfweb::site` shortcuts
     * `$server_name = $title`
+    * `$ifaces = ['local']`
     * `$auto_cert = {}`
     * `$shared_cert = []`
     * `$robots_noindex = true`
@@ -26,7 +29,7 @@ always up to date.
     * `$memory_min = 404`
     * `$memory_max = undef`
 * Kibana-specific:
-    * `$app_dbaccess` - define cfdb::access to cflogsink cluster
+    * `$app_dbaccess = { cluster => 'logsink' }` - define cfdb::access to cflogsink cluster
     * `$plugins = []` - list of plugins to install per instance
     * `$kibana_tune = {}` - custom overrides for `kibana.yml`
 

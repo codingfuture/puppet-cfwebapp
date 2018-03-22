@@ -3,7 +3,9 @@
 #
 
 define cfwebapp::kibana (
-    CfWeb::DBAccess $app_dbaccess,
+    Array[String[1]] $ifaces = ['local'],
+
+    CfWeb::DBAccess $app_dbaccess = { cluster => 'logsink' },
 
     String[1] $server_name = $title,
 
@@ -37,11 +39,6 @@ define cfwebapp::kibana (
         'server.name' => $server_name,
     }
 
-    $site_param_defaults = {
-        # safety to protect from misconfiguration
-        'ifaces' => [ 'local' ],
-    }
-
     include cfdb::elasticsearch
 
     # ---
@@ -62,8 +59,9 @@ define cfwebapp::kibana (
     }
 
     # ---
-    ensure_resource('cfweb::site', $title, $site_param_defaults + $site_params + {
+    ensure_resource('cfweb::site', $title, $site_params + {
         server_name        => $server_name,
+        ifaces             => $ifaces,
         auto_cert          => $auto_cert,
         shared_cert        => $shared_cert,
         is_backend         => $is_backend,

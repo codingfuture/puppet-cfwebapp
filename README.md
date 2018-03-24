@@ -12,7 +12,7 @@ Module with web application "recipes" on top of [cfweb](https://github.com/codin
 ### Kibana
 
 A fake RMS package is created from /usr/share/kibana setup coming from the official package. So, it should be
-always up to date.
+always up to date. No auto-configuration is performed.
 
 *Note: Kibana listens to loopback by default in case of accident misconfiguration.*
 

@@ -37,6 +37,7 @@ define cfwebapp::kibana (
         'kibana.defaultAppId' => 'discover',
     } + $kibana_tune + {
         'server.name' => $server_name,
+        'logging.json' => false,
     }
 
     include cfdb::elasticsearch
@@ -59,6 +60,12 @@ define cfwebapp::kibana (
     }
 
     # ---
+    $app_tune = {
+        scalable   => false,
+        socketType => "tcp",
+        socketPort => cfsystem::gen_port($user)
+    }
+
     ensure_resource('cfweb::site', $title, $site_params + {
         server_name        => $server_name,
         ifaces             => $ifaces,
@@ -131,8 +138,8 @@ define cfwebapp::kibana (
                 'env CONFIG_PATH ../.runtime/kibana.yml',
                 'persistent data',
                 'writable optimize',
-                'entrypoint app node src/cli \'{"scalable":false, "socketType":"tcp"}\'',
-                'webcfg main app',
+                "entrypoint kibana node src/cli \'${to_json($app_tune)}\'",
+                'webcfg main kibana',
             ] + $migrate,
         },
         require => Package['kibana'],

@@ -63,7 +63,7 @@ define cfwebapp::kibana (
     $app_port = cfsystem::gen_port($user)
     $app_tune = {
         scalable   => false,
-        socketType => "tcp",
+        socketType => 'tcp',
         socketPort => $app_port,
     }
     cfnetwork::describe_service{ $user:

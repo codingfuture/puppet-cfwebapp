@@ -1,5 +1,5 @@
 
-# (next)
+# 0.12.2 (2018-03-24)
 NEW: Elastic Kibana support
 
 # 0.12.1 (2018-03-10)

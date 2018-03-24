@@ -60,10 +60,18 @@ define cfwebapp::kibana (
     }
 
     # ---
+    $app_port = cfsystem::gen_port($user)
     $app_tune = {
         scalable   => false,
         socketType => "tcp",
-        socketPort => cfsystem::gen_port($user)
+        socketPort => $app_port,
+    }
+    cfnetwork::describe_service{ $user:
+        server => "tcp/${app_port}",
+    }
+    cfnetwork::service_port{ "local:${user}": }
+    cfnetwork::client_port{ "local:${user}":
+        user => $cfweb::nginx::user,
     }
 
     ensure_resource('cfweb::site', $title, $site_params + {

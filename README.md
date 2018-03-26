@@ -100,6 +100,8 @@ Example:
 
 ## Setup
 
+Up to date installation instructions are available in Puppet Forge: https://forge.puppet.com/codingfuture/cfwebapp
+
 Please use [librarian-puppet](https://rubygems.org/gems/librarian-puppet/) or
 [cfpuppetserver module](https://codingfuture.net/docs/cfpuppetserver) to deal with dependencies.
 

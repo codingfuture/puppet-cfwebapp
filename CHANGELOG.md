@@ -1,4 +1,7 @@
 
+# (next)
+FIXED: missing module hiera.yaml
+
 # 0.12.2 (2018-03-24)
 NEW: Elastic Kibana support
 

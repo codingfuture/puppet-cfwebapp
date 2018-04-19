@@ -1,18 +1,18 @@
 
 # (next)
-FIXED: missing module hiera.yaml
+- FIXED: missing module hiera.yaml
 
 # 0.12.2 (2018-03-24)
-NEW: Elastic Kibana support
+- NEW: Elastic Kibana support
 
 # 0.12.1 (2018-03-10)
-NEW: redmine $memory_min support
+- NEW: redmine $memory_min support
 
 # 0.12.0 (2018-02-09)
-NEW: version bump of cf* series
+- NEW: version bump of cf* series
 
 # 0.11.1 (2017-11-07)
-CHANGED: increase Redmien minMemory to 256M
+- CHANGED: increase Redmien minMemory to 256M
 
 # 0.11.0
 Initial release for Alpha-testing

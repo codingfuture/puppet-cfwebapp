@@ -19,8 +19,8 @@ define cfwebapp::alerta (
     Boolean $robots_noindex = true,
 
     Integer[1] $memory_weight = 100,
-    Integer[256] $memory_min = 256,
-    Optional[Integer[256]] $memory_max = undef,
+    Integer[196] $memory_min = 196,
+    Optional[Integer[196]] $memory_max = undef,
 
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'git',
@@ -44,7 +44,7 @@ define cfwebapp::alerta (
 
     # ---
     if !$api_secret and $cfweb::is_secondary {
-        fail('There must be shared rake_secret set in cluster')
+        fail('There must be shared api_secret set in cluster')
     }
 
     $secret_key = cfsystem::gen_pass("api:${title}", 32, $api_secret)
@@ -182,7 +182,7 @@ define cfwebapp::alerta (
                 ].join(' '),
                 'tools uwsgi python=3',
                 'entrypoint web nginx app socketType=unix',
-                'entrypoint api uwsgi ../.runtime/api_entry.wsgi internal=1 minMemory=32M connMemory=196M',
+                'entrypoint api uwsgi ../.runtime/api_entry.wsgi internal=1 minMemory=96M connMemory=64M',
                 'webcfg root app',
                 "webmount / '{\"static\":true}'",
                 "webmount /api/ '{\"app\":\"api\"}'",

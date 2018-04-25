@@ -26,7 +26,7 @@ with uWSGI and served in /api/ path.
     * `$site_params = {}` - other `cfweb::site` params
 * `futoin` app shortcuts:
     * `$memory_weight = 100`
-    * `$memory_min = 256`
+    * `$memory_min = 196`
     * `$memory_max = undeef`
     * `$deploy_type = 'vcstag'`
     * `$deploy_tool = 'git'`

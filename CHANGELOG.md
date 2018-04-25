@@ -1,6 +1,7 @@
 
 # (next)
 - FIXED: missing module hiera.yaml
+- NEW: alerta.io support
 
 # 0.12.2 (2018-03-24)
 - NEW: Elastic Kibana support

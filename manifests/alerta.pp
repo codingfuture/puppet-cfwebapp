@@ -182,7 +182,7 @@ define cfwebapp::alerta (
                 ].join(' '),
                 'tools uwsgi python=3',
                 'entrypoint web nginx app socketType=unix',
-                'entrypoint api uwsgi ../.runtime/api_entry.wsgi internal=1 minMemory=96M connMemory=64M',
+                'entrypoint api uwsgi ../.runtime/api_entry.wsgi internal=1 minMemory=64M connMemory=128M',
                 'webcfg root app',
                 "webmount / '{\"static\":true}'",
                 "webmount /api/ '{\"app\":\"api\"}'",

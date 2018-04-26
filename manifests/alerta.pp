@@ -19,21 +19,22 @@ define cfwebapp::alerta (
     Boolean $robots_noindex = true,
 
     Integer[1] $memory_weight = 100,
-    Integer[196] $memory_min = 196,
-    Optional[Integer[196]] $memory_max = undef,
+    Integer[192] $memory_min = 192,
+    Optional[Integer[192]] $memory_max = undef,
 
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'git',
-    String[1] $deploy_url = 'https://github.com/alerta/angular-alerta-webui.git',
+    String[1] $deploy_url = 'https://github.com/alerta/alerta.git',
     String[1] $deploy_match = 'v5*',
-    String[1] $api_version = 'latest',
 
     CfWeb::SMTP $smtp = {},
     Optional[String[1]] $api_secret = undef,
 
+    Array[String[1]] $admin_users = ["admin@${::facts['domain']}"],
+    Array[String[1]] $email_domains = [$::facts['domain']],
+    Array[String[1]] $cors_origins = [$server_name],
     Array[String[1]] $plugins = [],
-    Hash[String[1], Any] $api_tune = {},
-    Hash[String[1], Any] $web_tune = {},
+    Hash[String[1], Any] $tune = {},
 
     Hash[String[1], Any] $site_params = {},
 ) {
@@ -55,17 +56,20 @@ define cfwebapp::alerta (
         'HISTORY_LIMIT' => 100,
         'API_KEY_EXPIRE_DAYS' => 3650,
 
-        'ADMIN_USERS' => ['*'],
+        'AUTH_REQUIRED' => true,
         'CUSTOMER_VIEWS' => false,
 
         'EMAIL_VERIFICATION' => true,
         'SMTP_USE_SSL' => false,
         'MAIL_LOCALHOST' => $::facts['fqdn'],
-    } + $api_tune + {
+        'GITLAB_URL' => undef,
+    } + $tune + {
         'BASE_URL' => "https://${server_name}",
+        'CORS_ORIGINS' => $cors_origins,
         'LOGGER_NAME' => 'alerta',
 
-        'AUTH_REQUIRED' => true,
+        'ADMIN_USERS' => $admin_users,
+        'ALLOWED_EMAIL_DOMAINS' => $email_domains,
         'SECRET_KEY' => $secret_key,
 
         'PLUGINS' => $plugins,
@@ -84,9 +88,11 @@ define cfwebapp::alerta (
                 true    => 'True',
                 default => 'False'
             }
-            "${k} = '${vb}'"
+            "${k} = ${vb}"
         } elsif $v =~ Integer {
             "${k} = ${v}"
+        } elsif $v =~ Undef {
+            "${k} = None"
         } elsif $v =~ Array {
             $vl = $v.map | $iv | {
                 $ivs = regsubst($iv,"'", "\\'", 'G')
@@ -98,13 +104,6 @@ define cfwebapp::alerta (
             "${k} = '${vs}'"
         }
     }).join("\n")
-
-    # ---
-    $web_tune_all = {
-        'provider' => 'basic',
-    } + $web_tune + {
-        'endpoint' => '/api',
-    }
 
     # ---
     $smtp_port = $api_tune_all['SMTP_PORT']
@@ -147,47 +146,24 @@ define cfwebapp::alerta (
                 source .env
                 umask 027
 
-                CONF_DIR=.runtime
-                mkdir -p \$CONF_DIR
-
-                # Web UI config
-                cat >\$CONF_DIR/web_config.js <<EOF
-                'use strict';
-                angular.module('config', [])
-                    .constant('config', ${web_tune_all.to_json()});
-                EOF
-
                 # API config
-                cat >\$CONF_DIR/api_config <<EOF
+                cat >.alertad.conf <<EOF
                 ${api_cfg}
 
                 DATABASE_URL = '\$DB_CONNINFO'
                 DATABASE_NAME = '\$DB_DB'
                 EOF
-                
-                # WSGI entry point
-                cat > \$CONF_DIR/api_entry.wsgi <<EOF
-                import os
-                os.environ['ALERTA_SVR_CONF_FILE'] = '\$(pwd)/\$CONF_DIR/api_config'
-                from alerta import app as application
-                EOF
 
                 | EOT
                 ,
             deploy_set    => [
-                [
-                    'action prepare',
-                    "'cp -f ../.runtime/web_config.js app/config.js'",
-                    "'@cid tool exec pip -- install -U alerta-server alerta'"
-                ].join(' '),
-                'tools uwsgi python=3',
-                'entrypoint web nginx app socketType=unix',
-                'entrypoint api uwsgi ../.runtime/api_entry.wsgi internal=1 minMemory=64M connMemory=128M',
-                'webcfg root app',
-                "webmount / '{\"static\":true}'",
-                "webmount /api/ '{\"app\":\"api\"}'",
+                "action prepare '@default'",
+                'tools uwsgi pip python=3',
+                'tooltune uwsgi \'{"uwsgi":{"callable":"app"}}\'',
+                'env ALERTA_SVR_CONF_FILE ~/.alertad.conf',
+                'entrypoint api uwsgi alerta/app.wsgi internal=1 minMemory=64M connMemory=128M',
+                'webcfg root api',
             ],
         },
     })
-
 }

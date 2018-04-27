@@ -162,7 +162,7 @@ define cfwebapp::alerta (
                 'tooltune uwsgi \'{"uwsgi":{"callable":"app"}}\'',
                 'env ALERTA_SVR_CONF_FILE ~/.alertad.conf',
                 'entrypoint api uwsgi alerta/app.wsgi internal=1 minMemory=64M connMemory=128M',
-                'webcfg root api',
+                'webcfg main api',
             ],
         },
     })

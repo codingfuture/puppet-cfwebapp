@@ -106,6 +106,15 @@ define cfwebapp::alerta (
     }).join("\n")
 
     # ---
+    $uwsgi_tune = {
+        uwsgi => {
+            callable => 'app',
+            env      => "ALERTA_SVR_CONF_FILE=${site_dir}/.alertad.conf",
+            harakiri => 120,
+        }
+    }
+
+    # ---
     $smtp_port = $api_tune_all['SMTP_PORT']
 
     ensure_resource('cfnetwork::describe_service', "smtp_${smtp_port}", {
@@ -159,8 +168,7 @@ define cfwebapp::alerta (
             deploy_set    => [
                 "action prepare '@default'",
                 'tools uwsgi pip python=3',
-                'tooltune uwsgi \'{"uwsgi":{"callable":"app"}}\'',
-                'env ALERTA_SVR_CONF_FILE ~/.alertad.conf',
+                "tooltune uwsgi '${uwsgi_tune.to_json()}'",
                 'entrypoint api uwsgi alerta/app.wsgi internal=1 minMemory=64M connMemory=128M',
                 'webcfg main api',
             ],

@@ -78,6 +78,7 @@ define cfwebapp::alertaweb (
                     "'cp -f ../.runtime/web_config.js app/config.js'",
                 ].join(' '),
                 'tools nginx',
+                'webcfg root app',
                 "webmount / '{\"static\":true}'",
             ],
         },

@@ -1,5 +1,5 @@
 
-# (next)
+# 1.1.0 (2018-04-29)
 - FIXED: missing module hiera.yaml
 - NEW: alerta.io support
 

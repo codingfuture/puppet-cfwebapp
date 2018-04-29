@@ -22,19 +22,26 @@ define cfwebapp::alerta (
     Integer[192] $memory_min = 192,
     Optional[Integer[192]] $memory_max = undef,
 
-    String[1] $deploy_type = 'vcstag',
-    String[1] $deploy_tool = 'git',
-    String[1] $deploy_url = 'https://github.com/alerta/alerta.git',
-    String[1] $deploy_match = 'v5*',
+    String[1] $api_deploy_type = 'vcstag',
+    String[1] $api_deploy_tool = 'git',
+    String[1] $api_deploy_url = 'https://github.com/alerta/alerta.git',
+    String[1] $api_deploy_match = 'v5*',
+
+    String[1] $web_deploy_type = 'vcstag',
+    String[1] $web_deploy_tool = 'git',
+    String[1] $web_deploy_url = 'https://github.com/alerta/angular-alerta-webui.git',
+    String[1] $web_deploy_match = 'v5*',
 
     CfWeb::SMTP $smtp = {},
-    Optional[String[1]] $api_secret = undef,
+    Optional[String[1]] $secret_key = undef,
 
     Array[String[1]] $admin_users = ["admin@${::facts['domain']}"],
     Array[String[1]] $email_domains = [$::facts['domain']],
-    Array[String[1]] $cors_origins = [$server_name],
+    Array[String[1]] $cors_origins = [],
     Array[String[1]] $plugins = [],
-    Hash[String[1], Any] $tune = {},
+
+    Hash[String[1], Any] $api_tune = {},
+    Hash[String[1], Any] $web_tune = {},
 
     Hash[String[1], Any] $site_params = {},
 ) {
@@ -44,11 +51,18 @@ define cfwebapp::alerta (
     $site_dir = "${cfweb::nginx::web_dir}/${user}"
 
     # ---
-    if !$api_secret and $cfweb::is_secondary {
-        fail('There must be shared api_secret set in cluster')
+    if !$secret_key and $cfweb::is_secondary {
+        fail('There must be shared secret_key set in cluster')
     }
 
-    $secret_key = cfsystem::gen_pass("api:${title}", 32, $api_secret)
+    $act_secret_key = cfsystem::gen_pass("api:${title}", 32, $secret_key)
+
+    # ---
+    $act_cors_origins = (
+        $cors_origins +
+        [$server_name] +
+        pick_default($site_params['alt_names'], [])
+    )
 
     # ---
     $api_tune_all = {
@@ -63,14 +77,14 @@ define cfwebapp::alerta (
         'SMTP_USE_SSL' => false,
         'MAIL_LOCALHOST' => $::facts['fqdn'],
         'GITLAB_URL' => undef,
-    } + $tune + {
-        'BASE_URL' => "https://${server_name}",
-        'CORS_ORIGINS' => $cors_origins,
+    } + $api_tune + {
+        'BASE_URL' => "https://${server_name}/api",
+        'CORS_ORIGINS' => $act_cors_origins,
         'LOGGER_NAME' => 'alerta',
 
         'ADMIN_USERS' => $admin_users,
         'ALLOWED_EMAIL_DOMAINS' => $email_domains,
-        'SECRET_KEY' => $secret_key,
+        'SECRET_KEY' => $act_secret_key,
 
         'PLUGINS' => $plugins,
 
@@ -115,6 +129,13 @@ define cfwebapp::alerta (
     }
 
     # ---
+    $web_tune_all = {
+        'provider' => 'basic',
+    } + $web_tune + {
+        'endpoint' => '/api',
+    }
+
+    # ---
     $smtp_port = $api_tune_all['SMTP_PORT']
 
     ensure_resource('cfnetwork::describe_service', "smtp_${smtp_port}", {
@@ -138,40 +159,77 @@ define cfwebapp::alerta (
             },
         },
         apps               => {
-            futoin => {
+            api => {
+                type          => futoin,
                 memory_weight => $memory_weight,
                 memory_min    => $memory_min,
                 memory_max    => $memory_max,
+                deploy        => {
+                    type          => $api_deploy_type,
+                    tool          => $api_deploy_tool,
+                    url           => $api_deploy_url,
+                    match         => $api_deploy_match,
+                    custom_script => @("EOT"/$)
+                        #!/bin/bash
+                        set -e
+                        source .env
+                        umask 027
+
+                        # API config
+                        cat >${site_dir}/.alertad.conf <<EOF
+                        ${api_cfg}
+
+                        DATABASE_URL = '\$DB_CONNINFO'
+                        DATABASE_NAME = '\$DB_DB'
+                        EOF
+
+                        | EOT
+                        ,
+                    deploy_set    => [
+                        'tools uwsgi pip python=3',
+                        "tooltune uwsgi '${uwsgi_tune.to_json()}'",
+                        'entrypoint api uwsgi alerta/app.wsgi internal=1 minMemory=64M connMemory=128M',
+                        'webmount /api \'{"app":"api"}\'',
+                    ],
+                },
             },
-        },
-        deploy             => {
-            type          => $deploy_type,
-            tool          => $deploy_tool,
-            url           => $deploy_url,
-            match         => $deploy_match,
-            custom_script => @("EOT"/$)
-                #!/bin/bash
-                set -e
-                source .env
-                umask 027
+            web => {
+                type       => futoin,
+                memory_min => 0,
+                memory_max => 0,
+                deploy     => {
+                    type          => $web_deploy_type,
+                    tool          => $web_deploy_tool,
+                    url           => $web_deploy_url,
+                    match         => $web_deploy_match,
+                    custom_script => @("EOT"/$)
+                        #!/bin/bash
+                        set -e
+                        umask 027
 
-                # API config
-                cat >.alertad.conf <<EOF
-                ${api_cfg}
+                        CONF_DIR=.runtime
+                        mkdir -p \$CONF_DIR
 
-                DATABASE_URL = '\$DB_CONNINFO'
-                DATABASE_NAME = '\$DB_DB'
-                EOF
-
-                | EOT
-                ,
-            deploy_set    => [
-                "action prepare '@default'",
-                'tools uwsgi pip python=3',
-                "tooltune uwsgi '${uwsgi_tune.to_json()}'",
-                'entrypoint api uwsgi alerta/app.wsgi internal=1 minMemory=64M connMemory=128M',
-                'webcfg main api',
-            ],
+                        # Web UI config
+                        cat >\$CONF_DIR/web_config.js <<EOF
+                        'use strict';
+                        angular.module('config', [])
+                            .constant('config', ${web_tune_all.to_json()});
+                        EOF
+        
+                        | EOT
+                        ,
+                    deploy_set    => [
+                        [
+                            'action prepare',
+                            "'cp -f ../.runtime/web_config.js app/config.js'",
+                        ].join(' '),
+                        'tools nginx',
+                        'webcfg root app',
+                        "webmount / '{}'",
+                    ],
+                },
+            },
         },
     })
 }

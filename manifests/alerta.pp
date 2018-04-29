@@ -122,9 +122,11 @@ define cfwebapp::alerta (
     # ---
     $uwsgi_tune = {
         uwsgi => {
-            callable => 'app',
-            env      => "ALERTA_SVR_CONF_FILE=${site_dir}/.alertad.conf",
-            harakiri => 120,
+            callable             => 'app',
+            env                  => "ALERTA_SVR_CONF_FILE=${site_dir}/.alertad.conf",
+            harakiri             => 120,
+            'manage-script-name' => 1,
+            mount                => '/api=alerta/app.wsgi',
         }
     }
 
@@ -188,7 +190,7 @@ define cfwebapp::alerta (
                     deploy_set    => [
                         'tools uwsgi pip python=3',
                         "tooltune uwsgi '${uwsgi_tune.to_json()}'",
-                        'entrypoint api uwsgi alerta/app.wsgi internal=1 minMemory=64M connMemory=128M',
+                        'entrypoint api uwsgi "" internal=1 minMemory=64M connMemory=128M',
                         'webmount /api \'{"app":"api"}\'',
                     ],
                 },

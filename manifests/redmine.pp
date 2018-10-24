@@ -253,17 +253,17 @@ define cfwebapp::redmine (
                 
                 # Main config
                 #----
-                c_from=${pick_default($smtp['from'], '')}
+                c_from=${pick_default($smtp.dig('from'), '')}
                 if [ -n "\$c_from" ]; then l_from="from: \$c_from"; fi
                     
-                c_reply_to=${pick_default($smtp['reply_to'], '')}
+                c_reply_to=${pick_default($smtp.dig('reply_to'), '')}
                 if [ -n "\$c_reply_to" ]; then l_reply_to="reply_to: \$c_reply_to"; fi
 
-                c_user=${pick_default($smtp['user'], '')}
+                c_user=${pick_default($smtp.dig('user'), '')}
                 if [ -n "\$c_user" ]; then
                     l_user="user_name: \$c_user"
-                    l_pass="password: ${pick_default($smtp['password'], '')}"
-                    l_auth="authentication: ${pick_default($smtp['auth_mode'], 'plain')}"
+                    l_pass="password: ${pick_default($smtp.dig('password'), '')}"
+                    l_auth="authentication: ${pick_default($smtp.dig('auth_mode'), 'plain')}"
                 fi
                 
                 which_ignore() {
@@ -283,7 +283,7 @@ define cfwebapp::redmine (
                         smtp_settings:
                             address: ${smtp_host}
                             port: ${smtp_port}
-                            enable_starttls_auto: ${pick_default($smtp['start_tls'], false)}
+                            enable_starttls_auto: ${pick_default($smtp.dig('start_tls'), false)}
                             \$l_auth
                             \$l_user
                             \$l_pass

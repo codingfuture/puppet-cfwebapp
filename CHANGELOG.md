@@ -1,4 +1,7 @@
 
+# (next)
+- FIXED: workaround for Puppet 5.5.x string interpolation bug
+
 # 1.1.0 (2018-04-29)
 - FIXED: missing module hiera.yaml
 - NEW: alerta.io support

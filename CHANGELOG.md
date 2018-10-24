@@ -1,5 +1,5 @@
 
-# (next)
+# 1.1.1 (2018-10-24)
 - FIXED: workaround for Puppet 5.5.x string interpolation bug
 
 # 1.1.0 (2018-04-29)

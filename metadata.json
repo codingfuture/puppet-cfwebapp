@@ -2,7 +2,7 @@
   "name": "codingfuture-cfwebapp",
   "version": "1.1.1",
   "author": "Andrey Galkin",
-  "summary": "Book of cfweb recipies",
+  "summary": "Book of cfweb recipes",
   "license": "Apache-2.0",
   "source": "https://github.com/codingfuture/puppet-cfwebapp",
   "project_page": "https://github.com/codingfuture/puppet-cfwebapp",

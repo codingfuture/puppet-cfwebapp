@@ -1,4 +1,7 @@
 
+# (next)
+- CHANGED: updated for Ubuntu 18.04 Bionic support
+
 # 1.1.1 (2018-10-24)
 - FIXED: workaround for Puppet 5.5.x string interpolation bug
 

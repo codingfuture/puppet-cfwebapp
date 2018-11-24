@@ -16,8 +16,8 @@ define cfwebapp::kibana (
     Boolean $robots_noindex = true,
 
     Integer[1] $memory_weight = 100,
-    Integer[128] $memory_min = 256,
-    Optional[Integer[128]] $memory_max = 256,
+    Integer[128] $memory_min = 512,
+    Optional[Integer[128]] $memory_max = 512,
 
     Array[String[1]] $plugins = [],
     Hash[String[1], Any] $kibana_tune = {},

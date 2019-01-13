@@ -1,4 +1,7 @@
 
+# (next)
+- CHANGED: upgraded to Redmine 4.x, disabled plugins by default
+
 # 1.2.0 (2018-12-09)
 - CHANGED: updated for Ubuntu 18.04 Bionic support
 

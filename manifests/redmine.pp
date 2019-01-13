@@ -23,21 +23,21 @@ define cfwebapp::redmine (
     String[1] $deploy_type = 'vcstag',
     String[1] $deploy_tool = 'svn',
     String[1] $deploy_url = 'https://svn.redmine.org/redmine',
-    String[1] $deploy_match = '3.4.*',
-    String[1] $ruby_ver = '2.3',
+    String[1] $deploy_match = '4.*',
+    String[1] $ruby_ver = '2.6',
     Optional[String[1]] $rake_secret = undef,
 
 
     Hash[String[1], Hash] $plugins = {
-        'redmine_telegram_common' => {
-            'impl' => 'cfwebapp::redmine::redmine_telegram_common',
-        },
-        'redmine_2fa' => {
-            'impl' => 'cfwebapp::redmine::redmine_2fa',
-        },
-        'redmine_issue_checklist' => {
-            'impl' => 'cfwebapp::redmine::redmine_issue_checklist',
-        },
+        #'redmine_bots' => {
+        #    'impl' => 'cfwebapp::redmine::redmine_bots',
+        #},
+        #'redmine_2fa' => {
+        #    'impl' => 'cfwebapp::redmine::redmine_2fa',
+        #},
+        #'redmine_issue_checklist' => {
+        #    'impl' => 'cfwebapp::redmine::redmine_issue_checklist',
+        #},
     },
 
     Hash[String[1], Any] $site_params = {},
@@ -333,6 +333,7 @@ define cfwebapp::redmine (
                     "'rm -f config/initializers/secret_token.rb'",
                     "'ln -sfn ../../.redmine_conf/secrets.yml config/'",
                     "'rm -rf tmp && ln -s ../.tmp tmp'",
+                    "'@cid tool exec bundler -- remove puma'",
                 ].join(' '),
                 [
                     'action database-config',
@@ -342,6 +343,7 @@ define cfwebapp::redmine (
                     'action app-install',
                     "'@cid build-dep ruby mysql-client imagemagick tzdata libxml2'",
                     "'@cid tool exec bundler -- install --without \"development test\"'",
+                    "'@cid tool exec gem -- install puma'",
                 ].join(' '),
                 [
                     'action unpack-plugins',

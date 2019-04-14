@@ -1,5 +1,5 @@
 
-# (next)
+# 1.3.0 (2019-04-14)
 - CHANGED: upgraded to Redmine 4.x, disabled plugins by default
 
 # 1.2.0 (2018-12-09)

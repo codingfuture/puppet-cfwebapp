@@ -1,3 +1,5 @@
+# (next)
+- NEW: Wiki.js deployment support
 
 # 1.3.0 (2019-04-14)
 - CHANGED: upgraded to Redmine 4.x, disabled plugins by default

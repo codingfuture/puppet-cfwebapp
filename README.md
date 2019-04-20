@@ -9,6 +9,7 @@ Module with web application "recipes" on top of [cfweb](https://codingfuture.net
 * Alerta
 * Kibana
 * Redmine
+* Wiki.js
 
 ### Alerta
 
@@ -129,6 +130,27 @@ Example:
             ssl: true
 ```
 
+### Wiki.js
+
+* URL: [Wiki.js](https://docs.requarks.io/wiki/)
+* General `cfweb::site` shortcuts
+    * `$server_name = $title`
+    * `$auto_cert = {}`
+    * `$shared_cert = []`
+    * `$robots_noindex = true`
+    * `$site_params = {}` - other `cfweb::site` params
+* `futoin` app shortcuts:
+    * `$memory_weight = 100`
+    * `$memory_min = 350`
+    * `$memory_max = 400`
+* App-specific
+    * `$app_dbaccess` - DB access definition
+    * `$deploy_type = 'vcstag'`
+    * `$deploy_tool = 'git'`
+    * `$deploy_url = '...'`
+    * `$deploy_match = 'v1*'`
+    * `$session_secret = undef` - auto-gen by default
+	* `$tune = {}` - override configuration
 
 ## Technical Support
 

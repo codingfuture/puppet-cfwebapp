@@ -28,6 +28,8 @@ define cfwebapp::wikijs (
 
     Hash[String[1], Any] $site_params = {},
     Hash[String[1], Hash] $fw_ports = {},
+
+    Optional[String[1]] $sync_key = undef,
 ) {
     include cfweb::nginx
 
@@ -104,6 +106,7 @@ define cfwebapp::wikijs (
                 memory_weight => $memory_weight,
                 memory_min    => $memory_min,
                 memory_max    => $memory_max,
+                fw_ports      => $fw_ports,
             },
         },
         deploy             => {
@@ -111,6 +114,7 @@ define cfwebapp::wikijs (
             tool          => $deploy_tool,
             url           => $deploy_url,
             match         => $deploy_match,
+            key_name      => $sync_key,
             custom_script => @("EOT"/$)
                 #!/bin/bash
                 set -e
@@ -138,8 +142,16 @@ define cfwebapp::wikijs (
                     '@default',
                     "'ln -sfn ../.wikijs_conf/config.yml ./config.yml'",
                 ].join(' '),
+                [
+                    'action build',
+                    '@default',
+                    "'@cid tool exec npm -- run-script build'",
+                ].join(' '),
                 'entrypoint app node server/index.js \'{"minMemory":"320M","maxInstances":1}\'',
                 'webcfg main app',
+                'entrypoint web nginx assets socketType=unix',
+                'webcfg root assets',
+                "webmount / '{\"static\":true}'",
             ],
         }
     })

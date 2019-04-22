@@ -7,7 +7,7 @@ Module with web application "recipes" on top of [cfweb](https://codingfuture.net
 ## Apps supported
 
 * Alerta
-* Kibana
+* Kibana (Docker)
 * Redmine
 * Wiki.js
 
@@ -15,6 +15,7 @@ Module with web application "recipes" on top of [cfweb](https://codingfuture.net
 
 Alerta Server API and Web UI are installed from GitHub (by default) with FutoIn CID and run through uWSGI.
 
+* Type: `cfwebapp::alerta`
 * URL: [alerta.io](http://alerta.io)
 * General `cfweb::site` shortcuts
     * `$server_name = $title`
@@ -54,6 +55,7 @@ always up to date. No auto-configuration is performed.
 
 *Note: Kibana listens to loopback by default in case of accident misconfiguration.*
 
+* Type: `cfwebapp::kibana`
 * URL: [www.elastic.co](https://www.elastic.co/guide/en/kibana/current/introduction.html)
 * General `cfweb::site` shortcuts
     * `$server_name = $title`
@@ -71,6 +73,34 @@ always up to date. No auto-configuration is performed.
     * `$plugins = []` - list of plugins to install per instance
     * `$kibana_tune = {}` - custom overrides for `kibana.yml`
 
+### Kibana (Docker)
+
+A fake RMS package is created from /usr/share/kibana setup coming from the official package. So, it should be
+always up to date. No auto-configuration is performed.
+
+*Note: Kibana listens to loopback by default in case of accident misconfiguration.*
+
+* Type: `cfwebapp::docker::kibana`
+* URL: [www.elastic.co](https://www.elastic.co/guide/en/kibana/current/introduction.html)
+* General `cfweb::site` shortcuts
+    * `$server_name = $title`
+    * `$ifaces = ['local']`
+    * `$auto_cert = {}`
+    * `$shared_cert = []`
+    * `$robots_noindex = true`
+    * `$site_params = {}` - other `cfweb::site` params
+* `futoin` app shortcuts:
+    * `$memory_weight = 100`
+    * `$memory_min = 512`
+    * `$memory_max = 512`
+* Kibana-specific:
+    * `$app_dbaccess = { cluster => 'logsink' }` - define cfdb::access to cflogsink cluster
+    * `$kibana_tune = {}` - custom overrides for `kibana.yml`
+	* `$image`
+        * `image => 'docker.elastic.co/kibana/kibana-oss'`
+        * `image_tag => '6.7.1'`
+	* `$target_port = 5601` - port in target
+
 
 ### Redmine
 
@@ -78,6 +108,7 @@ Full Redmine deployment. By default SVN tags are used.
 
 IMAP IDLE-based polling supported. Good for low incoming email count.
 
+* Type: `cfwebapp::redmine`
 * URL: [www.redmine.org](http://www.redmine.org/)
 * General `cfweb::site` shortcuts
     * `$server_name = $title`
@@ -132,6 +163,7 @@ Example:
 
 ### Wiki.js
 
+* Type: `cfwebapp::wikijs`
 * URL: [Wiki.js](https://docs.requarks.io/wiki/)
 * General `cfweb::site` shortcuts
     * `$server_name = $title`

@@ -7,6 +7,7 @@ Module with web application "recipes" on top of [cfweb](https://codingfuture.net
 ## Apps supported
 
 * Alerta
+* Grafana
 * Kibana (Docker)
 * Redmine
 * Wiki.js
@@ -48,15 +49,12 @@ Alerta Server API and Web UI are installed from GitHub (by default) with FutoIn 
     * `$api_tune = {}` - fine overrides
     * `$web_tune = {}` - fine overrides
 
-### Kibana
+### Grafana (Docker)
 
-A fake RMS package is created from /usr/share/kibana setup coming from the official package. So, it should be
-always up to date. No auto-configuration is performed.
+*Note: Grafana listens to loopback by default in case of accident misconfiguration.*
 
-*Note: Kibana listens to loopback by default in case of accident misconfiguration.*
-
-* Type: `cfwebapp::kibana`
-* URL: [www.elastic.co](https://www.elastic.co/guide/en/kibana/current/introduction.html)
+* Type: `cfwebapp::docker::grafana`
+* URL: [www.elastic.co]()
 * General `cfweb::site` shortcuts
     * `$server_name = $title`
     * `$ifaces = ['local']`
@@ -66,17 +64,15 @@ always up to date. No auto-configuration is performed.
     * `$site_params = {}` - other `cfweb::site` params
 * `futoin` app shortcuts:
     * `$memory_weight = 100`
-    * `$memory_min = 404`
-    * `$memory_max = undef`
+    * `$memory_min = 512`
+    * `$memory_max = 512`
 * Kibana-specific:
-    * `$app_dbaccess = { cluster => 'logsink' }` - define cfdb::access to cflogsink cluster
-    * `$plugins = []` - list of plugins to install per instance
-    * `$kibana_tune = {}` - custom overrides for `kibana.yml`
+	* `$image`
+        * `image => 'monitoringartist/grafana-xxl'`
+        * `image_tag => 'latest'`
+	* `$target_port = 3000` - port in target
 
 ### Kibana (Docker)
-
-A fake RMS package is created from /usr/share/kibana setup coming from the official package. So, it should be
-always up to date. No auto-configuration is performed.
 
 *Note: Kibana listens to loopback by default in case of accident misconfiguration.*
 

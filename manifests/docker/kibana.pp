@@ -50,7 +50,6 @@ define cfwebapp::docker::kibana (
     ensure_resource('package', 'kibana', { ensure => absent })
 
     # ---
-    $inner_port = 8080
     $config_file = "${site_dir}/persistent/kibana.yml"
 
     ensure_resource('cfweb::site', $title, $site_params + {

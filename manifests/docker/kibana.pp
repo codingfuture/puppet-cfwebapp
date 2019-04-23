@@ -22,7 +22,7 @@ define cfwebapp::docker::kibana (
     Hash[String[1], Any] $kibana_tune = {},
 
     Hash[String[1], Any] $site_params = {},
-    Hash $image = {
+    CfWeb::DockerImage $image = {
         image => 'docker.elastic.co/kibana/kibana-oss',
         image_tag => '6.7.1',
     },
@@ -51,6 +51,7 @@ define cfwebapp::docker::kibana (
 
     # ---
     $inner_port = 8080
+    $config_file = "${site_dir}/persistent/kibana.yml"
 
     ensure_resource('cfweb::site', $title, $site_params + {
         server_name        => $server_name,
@@ -84,7 +85,7 @@ define cfwebapp::docker::kibana (
                 set -e
                 source .env
 
-                CONF_FILE=${site_dir}/persistent/kibana.yml
+                CONF_FILE=${config_file}
 
                 # DB
                 #----
@@ -96,7 +97,7 @@ define cfwebapp::docker::kibana (
                 chmod 644 \$CONF_FILE
                 | EOT
                 ,
+            config_files  => [$config_file],
         },
-        require => Package['kibana'],
     })
 }

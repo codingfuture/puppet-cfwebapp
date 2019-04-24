@@ -37,7 +37,7 @@ define cfwebapp::docker::grafana (
         mode   => '0777',
     }
 
-    $config_file = "${site_dir}/grafana.ini"
+    $config_file = "${site_dir}/persistent/grafana.ini"
 
     $grafana_tune_all = deep_merge(
         {

@@ -23,6 +23,8 @@ define cfwebapp::docker::grafana (
         image_tag => 'latest',
     },
     Cfnetwork::Port $target_port = 3000,
+    String[1] $docker_network = 'prometheus',
+    Hash $grafana_tune = {},
 ) {
     include cfweb::nginx
 
@@ -33,6 +35,41 @@ define cfwebapp::docker::grafana (
     file { "${site_dir}/persistent/data":
         ensure => directory,
         mode   => '0777',
+    }
+
+    $config_file = "${site_dir}/grafana.ini"
+
+    $grafana_tune_all = deep_merge(
+        {
+            security => {
+                disable_gravatar => true,
+            },
+            session => {
+                provider => memory,
+            },
+            log => {
+                mode => console,
+                level => warn,
+            },
+            # Authentication is assumed on reverse-proxy level by default
+            'auth.anonymous' => {
+                enabled  => true,
+                org_role => 'Admin',
+            },
+        },
+        $grafana_tune
+    ).map() |$sn, $sv| {
+        (
+            ["[${sn}]"] +
+            $sv.map() |$k, $v| {
+                "${k}=${v}"
+            }
+        )
+    }.flatten().join("\n")
+
+    file { $config_file:
+        mode    => '0555',
+        content => $grafana_tune_all
     }
 
     ensure_resource('cfweb::site', $title, $site_params + {
@@ -53,8 +90,11 @@ define cfwebapp::docker::grafana (
             target_port   => $target_port,
             image         => $image,
             binds         => {
-                'data' => '/var/lib/grafana',
+                'data'        => '/var/lib/grafana',
+                'grafana.ini' => '/etc/grafana/grafana.ini',
             },
+            network       => $docker_network,
+            config_files  => [$config_file],
         },
     })
 }

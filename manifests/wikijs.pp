@@ -48,7 +48,7 @@ define cfwebapp::wikijs (
 
     # Actual config
     # ---
-    $act_config = ({
+    $act_config = deep_merge({
         title => 'Sample Wiki',
         uploads => {
             maxImageFileSize => 3,
@@ -78,7 +78,7 @@ define cfwebapp::wikijs (
                 colorize => true,
             },
         }
-    } + $tune + {
+    }, $tune, {
         host => "https://${server_name}",
         # NOTE: not future-compatible assumption
         port => "${site_dir}/.runtime/app.0.sock",

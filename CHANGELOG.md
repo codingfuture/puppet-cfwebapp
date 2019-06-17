@@ -1,4 +1,4 @@
-# (next)
+# 1.3.1 (2019-06-17)
 - NEW: Wiki.js deployment support
 - NEW: Kibana in Docker support
 - NEW: Grafana in Docker support

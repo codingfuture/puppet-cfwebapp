@@ -1,3 +1,6 @@
+# (next)
+- NEW: fw_ports support for cfwebapp::redmine
+
 # 1.3.1 (2019-06-17)
 - NEW: Wiki.js deployment support
 - NEW: Kibana in Docker support

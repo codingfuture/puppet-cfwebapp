@@ -27,6 +27,7 @@ define cfwebapp::redmine (
     String[1] $ruby_ver = '2.6',
     Optional[String[1]] $rake_secret = undef,
 
+    Hash[String[1], Hash] $fw_ports = {},
 
     Hash[String[1], Hash] $plugins = {
         #'redmine_bots' => {
@@ -199,6 +200,7 @@ define cfwebapp::redmine (
                 memory_weight => $memory_weight,
                 memory_min    => $memory_min,
                 memory_max    => $memory_max,
+                fw_ports      => $fw_ports,
             },
         },
         deploy             => {

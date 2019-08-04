@@ -89,7 +89,7 @@ define cfwebapp::redmine (
             p=$(basename $p)
             p=${p%.*}
             pn=$(echo $p | cut -d- -f1)
-            mv ./plugins/$p ./plugins/$pn
+            test -d ./plugins/$pn || mv ./plugins/$p ./plugins/$pn
         done
         |EOT
     }

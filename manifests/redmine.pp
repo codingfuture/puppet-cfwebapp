@@ -357,7 +357,7 @@ define cfwebapp::redmine (
                     "'@cid tool exec bundler -- exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en'",
                     "'@cid tool exec bundler -- exec rake redmine:plugins:migrate RAILS_ENV=production'",
                 ].join(' '),
-                'persistent files log',
+                'persistent files log public/plugin_assets',
                 'entrypoint web nginx public socketType=unix',
                 'entrypoint app puma config.ru internal=1 connMemory=32M minMemory=256M',
                 'webcfg root public',

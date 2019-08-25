@@ -7,8 +7,9 @@ Module with web application "recipes" on top of [cfweb](https://codingfuture.net
 ## Apps supported
 
 * Alerta
-* Grafana
+* Grafana (Docker)
 * Kibana (Docker)
+* Metabase (Docker)
 * Redmine
 * Wiki.js
 
@@ -54,7 +55,7 @@ Alerta Server API and Web UI are installed from GitHub (by default) with FutoIn 
 *Note: Grafana listens to loopback by default in case of accident misconfiguration.*
 
 * Type: `cfwebapp::docker::grafana`
-* URL: [www.elastic.co]()
+* URL: [grafana.com](https://grafana.com/)
 * General `cfweb::site` shortcuts
     * `$server_name = $title`
     * `$ifaces = ['local']`
@@ -62,12 +63,12 @@ Alerta Server API and Web UI are installed from GitHub (by default) with FutoIn 
     * `$shared_cert = []`
     * `$robots_noindex = true`
     * `$site_params = {}` - other `cfweb::site` params
-* `futoin` app shortcuts:
+* `docker` app shortcuts:
     * `$memory_weight = 100`
     * `$memory_min = 512`
     * `$memory_max = 512`
-* Kibana-specific:
-	* `$image`
+* Grafana-specific:
+    * `$image`
         * `image => 'monitoringartist/grafana-xxl'`
         * `image_tag => 'latest'`
 	* `$target_port = 3000` - port in target
@@ -85,17 +86,41 @@ Alerta Server API and Web UI are installed from GitHub (by default) with FutoIn 
     * `$shared_cert = []`
     * `$robots_noindex = true`
     * `$site_params = {}` - other `cfweb::site` params
-* `futoin` app shortcuts:
+* `docker` app shortcuts:
     * `$memory_weight = 100`
     * `$memory_min = 512`
     * `$memory_max = 512`
 * Kibana-specific:
     * `$app_dbaccess = { cluster => 'logsink' }` - define cfdb::access to cflogsink cluster
     * `$kibana_tune = {}` - custom overrides for `kibana.yml`
-	* `$image`
+    * `$image`
         * `image => 'docker.elastic.co/kibana/kibana-oss'`
         * `image_tag => '6.7.1'`
 	* `$target_port = 5601` - port in target
+
+
+### Metabase (Docker)
+
+Setups Metabase. Extra connections need to be manually entered in configuration based on .env data.
+
+* Type: `cfwebapp::docker::metabase`
+* URL: [metabase.com](https://metabase.com/)
+* General `cfweb::site` shortcuts
+    * `$server_name = $title`
+    * `$ifaces = ['local']`
+    * `$auto_cert = {}`
+    * `$shared_cert = []`
+    * `$robots_noindex = true`
+    * `$site_params = {}` - other `cfweb::site` params
+* `docker` app shortcuts:
+    * `$memory_weight = 100`
+    * `$memory_min = 512`
+    * `$memory_max = 512`
+* Metabase-specific:
+    * `$app_dbaccess` - define cfdb::access to primary database
+    * `$image`
+        * `image => 'metabase/metabase'`
+        * `image_tag => 'latest'`
 
 
 ### Redmine

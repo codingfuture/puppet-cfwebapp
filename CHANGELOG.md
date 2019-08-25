@@ -2,6 +2,7 @@
 - FIXED: to make Redmine plugins_assets writable
 - NEW: fw_ports support for cfwebapp::redmine
 - NEW: redmine plugins support without wrapping folder
+- NEW: Metabase support via Docker
 
 # 1.3.1 (2019-06-17)
 - NEW: Wiki.js deployment support

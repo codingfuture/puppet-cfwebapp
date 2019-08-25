@@ -29,6 +29,12 @@
       "version_requirement": ">=4.7.0 <7.0.0"
     }
   ],
+  "tags": [
+    "kibana",
+    "metabase",
+    "redmine",
+    "wiki"
+  ],
   "dependencies": [
     {
       "name": "puppetlabs-stdlib",

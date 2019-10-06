@@ -319,6 +319,35 @@ define cfwebapp::redmine (
                 config.log_level = :fatal
                 EOF
                 mv -f \$CONF_DIR/additional_environment.rb.tmp \$CONF_DIR/additional_environment.rb
+
+                # Redmine #32109 until fixed in upstream
+                #---
+                cat >\$CONF_DIR/issue_32109.patch <<EOP
+                Index: app/models/issue.rb
+                ===================================================================
+                --- app/models/issue.rb (revision 18330)
+                +++ app/models/issue.rb (working copy)
+                @@ -1509,7 +1509,18 @@
+                   # Returns a scope of projects that user can assign the issue to
+                   def allowed_target_projects(user=User.current, context=nil)
+                     if new_record? && context.is_a?(Project) && !copy?
+                -      current_project = context.self_and_descendants
+                +      case Setting.cross_project_subtasks
+                +      when 'system'
+                +        current_project = nil
+                +      when 'tree'
+                +        current_project = context.root.self_and_descendants
+                +      when 'hierarchy'
+                +        current_project = context.hierarchy
+                +      when 'descendants'
+                +        current_project = context.self_and_descendants
+                +      else
+                +        current_project = nil
+                +      end
+                     elsif new_record?
+                       current_project = nil
+                     else
+                EOP
                 
                 # Trigger re-deploy on change
                 #---
@@ -335,6 +364,7 @@ define cfwebapp::redmine (
                     "'rm -f config/initializers/secret_token.rb'",
                     "'ln -sfn ../../.redmine_conf/secrets.yml config/'",
                     "'rm -rf tmp && ln -s ../.tmp tmp'",
+                    "'patch -p0 -l -i ../.redmine_conf/issue_32109.patch || true'",
                     "'@cid tool exec bundler -- remove puma'",
                 ].join(' '),
                 [

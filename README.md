@@ -151,10 +151,8 @@ IMAP IDLE-based polling supported. Good for low incoming email count.
     * `$rake_secret = undef` - auto-gen by default
     * '$smtp' - SMTP configuration
     * '$imap' - IMAP configuration
-    * `$plugins` - hash of name => params to install. Default:
-        * 'redmine_telegram_common' for 'redmine_2fa'
-        * 'redmine_2fa'
-        * 'redmine_issue_checklist'
+    * `$plugins` - hash of name => params to install.
+    * `$themes` - hash of name => params to install.
 
 Example:
 

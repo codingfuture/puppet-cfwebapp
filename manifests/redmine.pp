@@ -41,6 +41,8 @@ define cfwebapp::redmine (
         #},
     },
 
+    Hash[String[1], Hash] $themes = {},
+
     Hash[String[1], Any] $site_params = {},
 ) {
     require cfwebapp::redmine::gandi
@@ -52,8 +54,9 @@ define cfwebapp::redmine (
     # Where to put plugins for installation
     # ---
     $plugins_zip_dir  = "${site_dir}/.redmine_plugins"
+    $themes_zip_dir  = "${site_dir}/.redmine_themes"
 
-    file { $plugins_zip_dir:
+    file { [ $plugins_zip_dir, $themes_zip_dir ]:
         ensure  => directory,
         purge   => true,
         force   => true,
@@ -62,23 +65,24 @@ define cfwebapp::redmine (
         group   => $user,
         mode    => '0700',
     }
-    file { "${site_dir}/.unpack-plugins.sh":
+    -> file { "${site_dir}/.unpack-plugins.sh":
         owner   => $user,
         group   => $user,
         mode    => '0700',
         content => @(EOT)
         #!/bin/bash
-        
-        for p in $(find ../.redmine_plugins/ -type f); do
+
+        for t in plugins public/themes; do        
+        for p in $(find ../.redmine_$(basename $t)/ -type f); do
             case $p in
                 *.zip)
-                    /usr/bin/unzip -q -d ./plugins $p
+                    /usr/bin/unzip -q -d ./$t $p
                     ;;
                 *.tgz|*.tar.gz)
-                    /usr/bin/tar xzf -C ./plugins $p
+                    /usr/bin/tar xzf -C ./$t $p
                     ;;
                 *.tar|*.tar)
-                    /usr/bin/tar xf -C ./plugins $p
+                    /usr/bin/tar xf -C ./$t $p
                     ;;
                 *)
                     echo "Unsupported $p"
@@ -89,7 +93,8 @@ define cfwebapp::redmine (
             p=$(basename $p)
             p=${p%.*}
             pn=$(echo $p | cut -d- -f1)
-            test -d ./plugins/$pn || mv ./plugins/$p ./plugins/$pn
+            test -d ./$t/$pn || mv ./$t/$p ./$t/$pn
+        done
         done
         |EOT
     }
@@ -352,6 +357,7 @@ define cfwebapp::redmine (
                 # Trigger re-deploy on change
                 #---
                 cid deploy set env redminePlugins "$(ls .redmine_plugins)"
+                cid deploy set env redmineThemes "$(ls .redmine_themes)"
                 | EOT
                 ,
             deploy_set    => [
@@ -413,6 +419,27 @@ define cfwebapp::redmine (
         )
 
         File[$plugins_zip_dir]
+        -> Cfwebapp::Redmine::Generic[$rsc_name]
+        -> Cfweb::Deploy[$title]
+    }
+
+    # ---
+    $themes.each |$name, $params| {
+        $impl = pick($params['impl'], 'cfwebapp::redmine::generic')
+        $rsc_name = "${title}:${name}"
+
+        create_resources(
+            $impl,
+            {
+                $rsc_name => merge($params - ['impl', 'theme_version'], {
+                    target_dir     => $themes_zip_dir,
+                    plugin_name    => $name,
+                    plugin_version => $params['theme_version'],
+                })
+            }
+        )
+
+        File[$themes_zip_dir]
         -> Cfwebapp::Redmine::Generic[$rsc_name]
         -> Cfweb::Deploy[$title]
     }

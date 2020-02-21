@@ -1,3 +1,6 @@
+# (next)
+- NEW: Wiki.js v2 support
+
 # 1.3.2 (2019-11-13)
 - FIXED: to make Redmine plugins_assets writable
 - NEW: fw_ports support for cfwebapp::redmine
